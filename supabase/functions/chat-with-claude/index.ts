@@ -18,6 +18,18 @@ serve(async (req) => {
   try {
     const { messages } = await req.json();
 
+    // Filter out messages with empty content
+    const validMessages = messages.filter((msg: any) => {
+      const content = typeof msg.content === 'string' ? msg.content : msg.content?.text;
+      return content && content.trim() !== '';
+    });
+
+    if (validMessages.length === 0) {
+      throw new Error('No valid messages to send to Claude');
+    }
+
+    console.log('Sending messages to Claude:', validMessages);
+
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -28,9 +40,9 @@ serve(async (req) => {
       body: JSON.stringify({
         model: 'claude-3-opus-20240229',
         max_tokens: 1024,
-        messages: messages.map((msg: any) => ({
+        messages: validMessages.map((msg: any) => ({
           role: msg.role === 'user' ? 'user' : 'assistant',
-          content: typeof msg.content === 'string' ? msg.content : msg.content.text || ''
+          content: typeof msg.content === 'string' ? msg.content : msg.content.text
         })),
       }),
     });

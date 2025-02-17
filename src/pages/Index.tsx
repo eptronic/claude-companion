@@ -34,13 +34,14 @@ const Index = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!inputMessage.trim()) {
+    const trimmedMessage = inputMessage.trim();
+    if (!trimmedMessage) {
       return;
     }
 
     setIsLoading(true);
 
-    const newMessage = { role: "user", content: inputMessage };
+    const newMessage = { role: "user", content: trimmedMessage };
     const updatedMessages = [...messages, newMessage];
     setMessages(updatedMessages);
     setInputMessage("");
@@ -52,10 +53,15 @@ const Index = () => {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw error;
+      }
 
-      if (data.content) {
+      if (data?.content) {
         setMessages([...updatedMessages, { role: "assistant", content: data.content }]);
+      } else {
+        throw new Error('No content in response');
       }
     } catch (error) {
       console.error('Error calling Claude:', error);
