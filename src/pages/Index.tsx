@@ -15,8 +15,18 @@ import {
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
 
+type MessageContent = {
+  type?: string;
+  text?: string;
+} | string;
+
+interface Message {
+  role: string;
+  content: MessageContent;
+}
+
 const Index = () => {
-  const [messages, setMessages] = useState<{ role: string; content: string }[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -57,6 +67,13 @@ const Index = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const getMessageContent = (content: MessageContent): string => {
+    if (typeof content === 'string') {
+      return content;
+    }
+    return content.text || '';
   };
 
   const sidebarItems = [
@@ -102,7 +119,7 @@ const Index = () => {
                         : "bg-muted text-muted-foreground mr-12"
                     }`}
                   >
-                    {message.content}
+                    {getMessageContent(message.content)}
                   </div>
                 ))}
               </div>
