@@ -67,68 +67,70 @@ const Index = () => {
   ];
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full">
-        <Sidebar>
-          <SidebarContent>
-            <SidebarGroup>
-              <SidebarGroupLabel>Navigation</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {sidebarItems.map((item) => (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton>
-                        <item.icon className="w-5 h-5" />
-                        <span>{item.title}</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </SidebarContent>
-        </Sidebar>
+    <div className="bg-background min-h-screen">
+      <SidebarProvider>
+        <div className="min-h-screen flex w-full">
+          <Sidebar className="border-r border-border">
+            <SidebarContent>
+              <SidebarGroup>
+                <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {sidebarItems.map((item) => (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton>
+                          <item.icon className="w-5 h-5" />
+                          <span>{item.title}</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            </SidebarContent>
+          </Sidebar>
 
-        <main className="flex-1 p-6">
-          <div className="max-w-4xl mx-auto">
-            <div className="space-y-4 mb-4">
-              {messages.map((message, index) => (
-                <div
-                  key={index}
-                  className={`p-4 rounded-lg ${
-                    message.role === "user"
-                      ? "bg-primary text-primary-foreground ml-12"
-                      : "bg-muted mr-12"
-                  }`}
-                >
-                  {message.content}
-                </div>
-              ))}
-            </div>
-
-            <form onSubmit={handleSubmit} className="mt-4">
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={inputMessage}
-                  onChange={(e) => setInputMessage(e.target.value)}
-                  placeholder="Type your message..."
-                  className="flex-1 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                  disabled={isLoading}
-                />
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
-                  disabled={isLoading}
-                >
-                  {isLoading ? "Sending..." : "Send"}
-                </button>
+          <main className="flex-1 p-6">
+            <div className="max-w-4xl mx-auto">
+              <div className="space-y-4 mb-4">
+                {messages.map((message, index) => (
+                  <div
+                    key={index}
+                    className={`p-4 rounded-lg ${
+                      message.role === "user"
+                        ? "bg-primary text-primary-foreground ml-12"
+                        : "bg-muted text-muted-foreground mr-12"
+                    }`}
+                  >
+                    {message.content}
+                  </div>
+                ))}
               </div>
-            </form>
-          </div>
-        </main>
-      </div>
-    </SidebarProvider>
+
+              <form onSubmit={handleSubmit} className="mt-4">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={inputMessage}
+                    onChange={(e) => setInputMessage(e.target.value)}
+                    placeholder="Type your message..."
+                    className="flex-1 p-2 bg-muted text-foreground border-border border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                    disabled={isLoading}
+                  />
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? "Sending..." : "Send"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </main>
+        </div>
+      </SidebarProvider>
+    </div>
   );
 };
 
