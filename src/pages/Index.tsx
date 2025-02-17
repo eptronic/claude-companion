@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { MessageSquare, File, Folder, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import {
   SidebarProvider,
   Sidebar,
@@ -15,34 +16,47 @@ import {
 } from "@/components/ui/sidebar";
 
 const Index = () => {
-  const [apiKey, setApiKey] = useState("");
   const [messages, setMessages] = useState<{ role: string; content: string }[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!apiKey) {
-      toast({
-        title: "Error",
-        description: "Please enter your Claude API key",
-        variant: "destructive",
-      });
-      return;
-    }
 
     if (!inputMessage.trim()) {
       return;
     }
 
-    const newMessages = [
-      ...messages,
-      { role: "user", content: inputMessage },
-    ];
-    setMessages(newMessages);
+    setIsLoading(true);
+
+    const newMessage = { role: "user", content: inputMessage };
+    const updatedMessages = [...messages, newMessage];
+    setMessages(updatedMessages);
     setInputMessage("");
 
-    // TODO: Implement Claude API call here
+    try {
+      const { data, error } = await supabase.functions.invoke('chat-with-claude', {
+        body: {
+          messages: updatedMessages
+        },
+      });
+
+      if (error) throw error;
+
+      if (data.content) {
+        setMessages([...updatedMessages, { role: "assistant", content: data.content }]);
+      }
+    } catch (error) {
+      console.error('Error calling Claude:', error);
+      toast({
+        title: "Error",
+        description: "Failed to get a response from Claude. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const sidebarItems = [
@@ -77,24 +91,6 @@ const Index = () => {
 
         <main className="flex-1 p-6">
           <div className="max-w-4xl mx-auto">
-            {!apiKey && (
-              <div className="mb-8 p-6 rounded-lg border animate-fade-in">
-                <h2 className="text-xl font-semibold mb-4">Welcome to Claude Chat</h2>
-                <div className="space-y-4">
-                  <input
-                    type="password"
-                    placeholder="Enter your Claude API key"
-                    className="w-full p-2 border rounded"
-                    value={apiKey}
-                    onChange={(e) => setApiKey(e.target.value)}
-                  />
-                  <p className="text-sm text-muted-foreground">
-                    Your API key is stored locally and never sent to our servers.
-                  </p>
-                </div>
-              </div>
-            )}
-
             <div className="space-y-4 mb-4">
               {messages.map((message, index) => (
                 <div
@@ -118,12 +114,14 @@ const Index = () => {
                   onChange={(e) => setInputMessage(e.target.value)}
                   placeholder="Type your message..."
                   className="flex-1 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  disabled={isLoading}
                 />
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+                  className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+                  disabled={isLoading}
                 >
-                  Send
+                  {isLoading ? "Sending..." : "Send"}
                 </button>
               </div>
             </form>
