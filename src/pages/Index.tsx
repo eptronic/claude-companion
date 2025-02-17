@@ -67,9 +67,9 @@ const Index = () => {
   ];
 
   return (
-    <div className="bg-background min-h-screen">
+    <div className="w-screen h-screen overflow-hidden">
       <SidebarProvider>
-        <div className="min-h-screen flex w-full">
+        <div className="h-full flex">
           <Sidebar className="border-r border-border">
             <SidebarContent>
               <SidebarGroup>
@@ -90,7 +90,7 @@ const Index = () => {
             </SidebarContent>
           </Sidebar>
 
-          <main className="flex-1 p-6">
+          <main className="flex-1 p-6 overflow-auto">
             <div className="max-w-4xl mx-auto">
               <div className="space-y-4 mb-4">
                 {messages.map((message, index) => (
