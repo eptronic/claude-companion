@@ -28,13 +28,23 @@ serve(async (req) => {
       body: JSON.stringify({
         model: 'claude-3-opus-20240229',
         max_tokens: 1024,
-        messages,
+        messages: messages.map((msg: any) => ({
+          role: msg.role === 'user' ? 'user' : 'assistant',
+          content: typeof msg.content === 'string' ? msg.content : msg.content.text || ''
+        })),
       }),
     });
 
     const data = await response.json();
+    console.log('Claude API response:', data);
     
-    return new Response(JSON.stringify(data), {
+    if (data.error) {
+      throw new Error(data.error.message || 'Error from Claude API');
+    }
+
+    return new Response(JSON.stringify({ 
+      content: data.content[0].text
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
