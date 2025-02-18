@@ -22,34 +22,29 @@ serve(async (req) => {
 
     console.log('Fetching Claude history...');
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${ANTHROPIC_API_KEY}`,
-        'anthropic-version': '2023-06-01',
-        'Content-Type': 'application/json',
-        'x-api-key': ANTHROPIC_API_KEY
+    // For now, return mock data since the messages endpoint requires specific parameters
+    // that we'll implement in a future update
+    const mockHistory = [
+      { 
+        id: '1', 
+        title: 'Previous Chat 1', 
+        timestamp: new Date().toISOString(),
+        preview: 'This is a preview of the first conversation...'
       },
-      // Add query parameters as needed
-      // Example: ?limit=10&order=desc
-    });
+      { 
+        id: '2', 
+        title: 'Previous Chat 2', 
+        timestamp: new Date().toISOString(),
+        preview: 'This is a preview of the second conversation...'
+      }
+    ];
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Claude API error:', errorText);
-      throw new Error(`Claude API responded with status ${response.status}: ${errorText}`);
-    }
-
-    const data = await response.json();
-    console.log('Successfully fetched history');
+    console.log('Returning mock history data');
     
-    // Return mock data for now since the API might not be fully set up
-    return new Response(JSON.stringify([
-      { id: '1', title: 'Previous Chat 1', timestamp: new Date().toISOString() },
-      { id: '2', title: 'Previous Chat 2', timestamp: new Date().toISOString() }
-    ]), {
+    return new Response(JSON.stringify(mockHistory), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
+
   } catch (error) {
     console.error('Error in claude-history function:', error);
     return new Response(
