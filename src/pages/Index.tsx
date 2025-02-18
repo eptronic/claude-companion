@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MessageSquare, File, Folder, Search, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,6 +30,35 @@ const Index = () => {
   const [inputMessage, setInputMessage] = useState("");
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [conversations, setConversations] = useState<any[]>([]);
+
+  const fetchConversationHistory = async () => {
+    setIsLoadingHistory(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('claude-history', {
+        body: {},
+      });
+
+      if (error) throw error;
+      if (data) {
+        setConversations(data);
+      }
+    } catch (error) {
+      console.error('Error fetching history:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch conversation history.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchConversationHistory();
+  }, []);
 
   const handleNewChat = () => {
     setMessages([]);
@@ -97,9 +126,24 @@ const Index = () => {
       title: "Files", 
       icon: File,
       onClick: () => {
+        if (isLoadingHistory) {
+          toast({
+            title: "Loading",
+            description: "Please wait while we fetch your conversation history.",
+          });
+          return;
+        }
+        if (conversations.length === 0) {
+          toast({
+            title: "No Files",
+            description: "No conversation files found in your history.",
+          });
+          return;
+        }
+        // Handle displaying conversation files
         toast({
-          title: "Coming Soon",
-          description: "Files access will be available in a future update.",
+          title: "Files",
+          description: `Found ${conversations.length} conversations in your history.`,
         });
       }
     },
@@ -107,9 +151,17 @@ const Index = () => {
       title: "Projects", 
       icon: Folder,
       onClick: () => {
+        if (isLoadingHistory) {
+          toast({
+            title: "Loading",
+            description: "Please wait while we fetch your projects.",
+          });
+          return;
+        }
+        // Handle projects view
         toast({
-          title: "Coming Soon",
-          description: "Project history will be available in a future update.",
+          title: "Projects",
+          description: "Project organization coming soon.",
         });
       }
     },
@@ -117,9 +169,17 @@ const Index = () => {
       title: "Search", 
       icon: Search,
       onClick: () => {
+        if (isLoadingHistory) {
+          toast({
+            title: "Loading",
+            description: "Please wait while we initialize search.",
+          });
+          return;
+        }
+        // Handle search functionality
         toast({
-          title: "Coming Soon",
-          description: "Search functionality will be available in a future update.",
+          title: "Search",
+          description: "Search functionality coming soon.",
         });
       }
     },
@@ -132,7 +192,9 @@ const Index = () => {
           <Sidebar className="border-r border-border bg-card">
             <SidebarContent>
               <SidebarGroup>
-                <SidebarGroupLabel className="text-muted-foreground">Navigation</SidebarGroupLabel>
+                <SidebarGroupLabel className="text-muted-foreground">
+                  {isLoadingHistory ? "Loading..." : "Navigation"}
+                </SidebarGroupLabel>
                 <SidebarGroupContent>
                   <SidebarMenu>
                     {sidebarItems.map((item) => (

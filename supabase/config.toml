@@ -1,1 +1,8 @@
-project_id = "oimbqgyhpcqkqorekhvo"
+
+project_id = "your-project-id"
+
+[functions.chat-with-claude]
+verify_jwt = false
+
+[functions.claude-history]
+verify_jwt = false
