@@ -1,8 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import "https://deno.land/x/xhr@0.1.0/mod.ts"
-
-const ANTHROPIC_API_KEY = Deno.env.get('CLAUDE_API_KEY')
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -16,32 +14,61 @@ serve(async (req) => {
   }
 
   try {
-    if (!ANTHROPIC_API_KEY) {
-      throw new Error('CLAUDE_API_KEY is not set');
+    // Create a Supabase client
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+          detectSessionInUrl: false
+        }
+      }
+    )
+
+    // Get the user token from the request headers
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      throw new Error('No authorization header')
     }
 
-    console.log('Fetching Claude history...');
+    // Get the JWT token from the Authorization header
+    const token = authHeader.replace('Bearer ', '')
 
-    // For now, return mock data since the messages endpoint requires specific parameters
-    // that we'll implement in a future update
-    const mockHistory = [
-      { 
-        id: '1', 
-        title: 'Previous Chat 1', 
-        timestamp: new Date().toISOString(),
-        preview: 'This is a preview of the first conversation...'
-      },
-      { 
-        id: '2', 
-        title: 'Previous Chat 2', 
-        timestamp: new Date().toISOString(),
-        preview: 'This is a preview of the second conversation...'
-      }
-    ];
-
-    console.log('Returning mock history data');
+    // Set the auth token for the client
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token)
     
-    return new Response(JSON.stringify(mockHistory), {
+    if (userError || !user) {
+      throw new Error('Invalid user token')
+    }
+
+    // Fetch chats for the authenticated user
+    const { data: chats, error: chatsError } = await supabaseClient
+      .from('chats')
+      .select('*')
+      .order('updated_at', { ascending: false })
+
+    if (chatsError) {
+      throw chatsError
+    }
+
+    // Fetch projects for the authenticated user
+    const { data: projects, error: projectsError } = await supabaseClient
+      .from('projects')
+      .select('*')
+      .order('updated_at', { ascending: false })
+
+    if (projectsError) {
+      throw projectsError
+    }
+
+    console.log('Successfully fetched history and projects');
+    
+    return new Response(JSON.stringify({
+      chats: chats || [],
+      projects: projects || []
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
