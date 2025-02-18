@@ -31,6 +31,11 @@ const Index = () => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
+  const handleNewChat = () => {
+    setMessages([]);
+    setInputMessage("");
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -83,10 +88,41 @@ const Index = () => {
   };
 
   const sidebarItems = [
-    { title: "Chat", icon: MessageSquare },
-    { title: "Files", icon: File },
-    { title: "Projects", icon: Folder },
-    { title: "Search", icon: Search },
+    { 
+      title: "New Chat", 
+      icon: MessageSquare,
+      onClick: handleNewChat 
+    },
+    { 
+      title: "Files", 
+      icon: File,
+      onClick: () => {
+        toast({
+          title: "Coming Soon",
+          description: "Files access will be available in a future update.",
+        });
+      }
+    },
+    { 
+      title: "Projects", 
+      icon: Folder,
+      onClick: () => {
+        toast({
+          title: "Coming Soon",
+          description: "Project history will be available in a future update.",
+        });
+      }
+    },
+    { 
+      title: "Search", 
+      icon: Search,
+      onClick: () => {
+        toast({
+          title: "Coming Soon",
+          description: "Search functionality will be available in a future update.",
+        });
+      }
+    },
   ];
 
   return (
@@ -101,7 +137,10 @@ const Index = () => {
                   <SidebarMenu>
                     {sidebarItems.map((item) => (
                       <SidebarMenuItem key={item.title}>
-                        <SidebarMenuButton className="hover:bg-muted">
+                        <SidebarMenuButton 
+                          className="hover:bg-muted"
+                          onClick={item.onClick}
+                        >
                           <item.icon className="w-5 h-5" />
                           <span>{item.title}</span>
                         </SidebarMenuButton>
@@ -113,9 +152,9 @@ const Index = () => {
             </SidebarContent>
           </Sidebar>
 
-          <main className="flex-1 flex flex-col">
-            <div className="flex-1 p-6 overflow-auto">
-              <div className="max-w-4xl mx-auto">
+          <main className="flex-1 flex flex-col h-screen">
+            <div className="flex-1 overflow-auto">
+              <div className="max-w-4xl mx-auto p-6">
                 <div className="space-y-6">
                   {messages.map((message, index) => (
                     <div
@@ -139,9 +178,9 @@ const Index = () => {
               </div>
             </div>
 
-            <div className="border-t border-border p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-              <form onSubmit={handleSubmit} className="max-w-4xl mx-auto">
-                <div className="flex gap-2 items-center">
+            <div className="border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 w-full">
+              <form onSubmit={handleSubmit} className="p-4">
+                <div className="flex gap-2 items-center max-w-4xl mx-auto">
                   <input
                     type="text"
                     value={inputMessage}
