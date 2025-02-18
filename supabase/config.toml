@@ -1,5 +1,5 @@
 
-project_id = "your-project-id"
+project_id = "oimbqgyhpcqkqorekhvo"
 
 [functions.chat-with-claude]
 verify_jwt = false
