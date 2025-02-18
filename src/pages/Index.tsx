@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { MessageSquare, File, Folder, Search, Send } from "lucide-react";
+import { MessageSquare, File, Folder, Search, Send, ChevronDown, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -13,6 +13,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  SidebarMenuSub,
 } from "@/components/ui/sidebar";
 
 type MessageContent = {
@@ -25,6 +26,12 @@ interface Message {
   content: MessageContent;
 }
 
+interface ConversationGroup {
+  id: string;
+  title: string;
+  conversations: any[];
+}
+
 const Index = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
@@ -32,6 +39,18 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [conversations, setConversations] = useState<any[]>([]);
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    files: false,
+    projects: false,
+    history: true
+  });
+
+  const toggleSection = (section: string) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
 
   const fetchConversationHistory = async () => {
     setIsLoadingHistory(true);
@@ -192,24 +211,107 @@ const Index = () => {
           <Sidebar className="border-r border-border bg-card">
             <SidebarContent>
               <SidebarGroup>
-                <SidebarGroupLabel className="text-muted-foreground">
-                  {isLoadingHistory ? "Loading..." : "Navigation"}
-                </SidebarGroupLabel>
-                <SidebarGroupContent>
-                  <SidebarMenu>
-                    {sidebarItems.map((item) => (
-                      <SidebarMenuItem key={item.title}>
-                        <SidebarMenuButton 
-                          className="hover:bg-muted"
-                          onClick={item.onClick}
-                        >
-                          <item.icon className="w-5 h-5" />
-                          <span>{item.title}</span>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    ))}
-                  </SidebarMenu>
-                </SidebarGroupContent>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton 
+                      className="hover:bg-muted"
+                      onClick={handleNewChat}
+                    >
+                      <MessageSquare className="w-5 h-5" />
+                      <span>New Chat</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+
+                {/* Chat History Section */}
+                <div className="mt-4">
+                  <SidebarGroupLabel 
+                    className="flex items-center justify-between px-2 cursor-pointer hover:text-primary"
+                    onClick={() => toggleSection('history')}
+                  >
+                    <span>Chat History</span>
+                    {expandedSections.history ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                  </SidebarGroupLabel>
+                  {expandedSections.history && (
+                    <SidebarMenuSub>
+                      {isLoadingHistory ? (
+                        <div className="px-2 py-1 text-sm text-muted-foreground">Loading history...</div>
+                      ) : conversations.length > 0 ? (
+                        conversations.map((conv, index) => (
+                          <SidebarMenuItem key={index}>
+                            <SidebarMenuButton 
+                              className="text-sm truncate hover:bg-muted"
+                              onClick={() => {
+                                toast({
+                                  description: "Loading conversation...",
+                                });
+                              }}
+                            >
+                              <MessageSquare className="w-4 h-4" />
+                              <span>{conv.title || `Conversation ${index + 1}`}</span>
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
+                        ))
+                      ) : (
+                        <div className="px-2 py-1 text-sm text-muted-foreground">No chat history</div>
+                      )}
+                    </SidebarMenuSub>
+                  )}
+                </div>
+
+                {/* Files Section */}
+                <div className="mt-4">
+                  <SidebarGroupLabel 
+                    className="flex items-center justify-between px-2 cursor-pointer hover:text-primary"
+                    onClick={() => toggleSection('files')}
+                  >
+                    <span>Files</span>
+                    {expandedSections.files ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                  </SidebarGroupLabel>
+                  {expandedSections.files && (
+                    <SidebarMenuSub>
+                      <div className="px-2 py-1 text-sm text-muted-foreground">
+                        No files available
+                      </div>
+                    </SidebarMenuSub>
+                  )}
+                </div>
+
+                {/* Projects Section */}
+                <div className="mt-4">
+                  <SidebarGroupLabel 
+                    className="flex items-center justify-between px-2 cursor-pointer hover:text-primary"
+                    onClick={() => toggleSection('projects')}
+                  >
+                    <span>Projects</span>
+                    {expandedSections.projects ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                  </SidebarGroupLabel>
+                  {expandedSections.projects && (
+                    <SidebarMenuSub>
+                      <div className="px-2 py-1 text-sm text-muted-foreground">
+                        No projects available
+                      </div>
+                    </SidebarMenuSub>
+                  )}
+                </div>
+
+                {/* Search Section */}
+                <SidebarMenu className="mt-4">
+                  <SidebarMenuItem>
+                    <SidebarMenuButton 
+                      className="hover:bg-muted"
+                      onClick={() => {
+                        toast({
+                          title: "Search",
+                          description: "Search functionality coming soon.",
+                        });
+                      }}
+                    >
+                      <Search className="w-5 h-5" />
+                      <span>Search</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
               </SidebarGroup>
             </SidebarContent>
           </Sidebar>
