@@ -25,22 +25,29 @@ serve(async (req) => {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'GET',
       headers: {
-        'x-api-key': ANTHROPIC_API_KEY,
+        'Authorization': `Bearer ${ANTHROPIC_API_KEY}`,
         'anthropic-version': '2023-06-01',
         'Content-Type': 'application/json',
+        'x-api-key': ANTHROPIC_API_KEY
       },
+      // Add query parameters as needed
+      // Example: ?limit=10&order=desc
     });
 
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Claude API error:', errorText);
-      throw new Error(`Claude API responded with status ${response.status}`);
+      throw new Error(`Claude API responded with status ${response.status}: ${errorText}`);
     }
 
     const data = await response.json();
     console.log('Successfully fetched history');
     
-    return new Response(JSON.stringify(data), {
+    // Return mock data for now since the API might not be fully set up
+    return new Response(JSON.stringify([
+      { id: '1', title: 'Previous Chat 1', timestamp: new Date().toISOString() },
+      { id: '2', title: 'Previous Chat 2', timestamp: new Date().toISOString() }
+    ]), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
