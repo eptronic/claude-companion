@@ -58,8 +58,11 @@
         "height": 800,
         "resizable": true,
         "title": "Claude Companion",
-        "width": 1200
+        "width": 1200,
+        "minWidth": 800,
+        "minHeight": 600
       }
     ]
   }
 }
+
