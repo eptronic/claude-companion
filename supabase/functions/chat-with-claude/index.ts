@@ -41,17 +41,19 @@ serve(async (req) => {
         const response = await fetch('https://api.anthropic.com/v1/messages', {
           method: 'POST',
           headers: {
-            'x-api-key': CLAUDE_API_KEY,
-            'anthropic-version': '2023-06-01',
+            'anthropic-api-key': CLAUDE_API_KEY,
+            'anthropic-version': '2023-01-01',
             'content-type': 'application/json',
           },
           body: JSON.stringify({
             model: 'claude-3-opus-20240229',
             max_tokens: 1024,
+            temperature: 0.7,
             messages: validMessages.map((msg: any) => ({
               role: msg.role === 'user' ? 'user' : 'assistant',
               content: typeof msg.content === 'string' ? msg.content : msg.content.text
             })),
+            system: "You are a helpful AI assistant. Provide clear, concise responses."
           }),
         });
 
@@ -63,26 +65,25 @@ serve(async (req) => {
             error: errorData
           });
 
+          // If we get a 429 or 503, wait and retry
           if (response.status === 429 || response.status === 503) {
-            // Rate limit or service overloaded - retry after delay
             attempts++;
             if (attempts < maxAttempts) {
-              const delay = Math.pow(2, attempts) * 1000; // Exponential backoff
+              // Use the retry-after header if available, otherwise use exponential backoff
+              const retryAfter = response.headers.get('retry-after');
+              const delay = retryAfter ? parseInt(retryAfter) * 1000 : Math.pow(2, attempts) * 1000;
               console.log(`Retrying after ${delay}ms (attempt ${attempts + 1}/${maxAttempts})`);
               await wait(delay);
               continue;
             }
           }
           
+          // For other errors, throw immediately
           throw new Error(`Claude API error: ${response.status} ${response.statusText}`);
         }
 
         const data = await response.json();
         console.log('Claude API response:', data);
-        
-        if (data.error) {
-          throw new Error(data.error.message || 'Error from Claude API');
-        }
 
         return new Response(JSON.stringify({ 
           content: data.content[0].text
@@ -91,6 +92,7 @@ serve(async (req) => {
         });
 
       } catch (error) {
+        console.error('Request failed:', error);
         if (attempts === maxAttempts - 1) {
           throw error; // Rethrow on last attempt
         }
