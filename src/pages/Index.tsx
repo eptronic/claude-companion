@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { MessageSquare, File, Folder, Search, Send, ChevronDown, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -128,6 +127,20 @@ const Index = () => {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error logging out:', error);
+      toast({
+        title: "Error",
+        description: "Failed to log out.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const getMessageContent = (content: MessageContent): string => {
     if (typeof content === 'string') {
       return content;
@@ -219,6 +232,15 @@ const Index = () => {
                     >
                       <MessageSquare className="w-5 h-5" />
                       <span>New Chat</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+
+                  <SidebarMenuItem>
+                    <SidebarMenuButton 
+                      className="hover:bg-muted text-destructive"
+                      onClick={handleLogout}
+                    >
+                      <span>Log Out</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 </SidebarMenu>
