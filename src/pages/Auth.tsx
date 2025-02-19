@@ -39,40 +39,11 @@ export default function Auth() {
     }
   };
 
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    
-    try {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      toast({
-        title: "Success",
-        description: "Check your email for the confirmation link.",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to sign up",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="w-full max-w-md p-8 space-y-6 bg-card rounded-lg shadow-lg">
-        <h2 className="text-2xl font-bold text-center text-foreground">Welcome</h2>
-        <form className="space-y-4">
+        <h2 className="text-2xl font-bold text-center text-foreground">Welcome Back</h2>
+        <form className="space-y-4" onSubmit={handleSignIn}>
           <div>
             <Input
               type="email"
@@ -91,23 +62,13 @@ export default function Auth() {
               required
             />
           </div>
-          <div className="flex gap-4">
-            <Button
-              className="flex-1"
-              onClick={handleSignIn}
-              disabled={loading}
-            >
-              Sign In
-            </Button>
-            <Button
-              className="flex-1"
-              onClick={handleSignUp}
-              variant="outline"
-              disabled={loading}
-            >
-              Sign Up
-            </Button>
-          </div>
+          <Button
+            className="w-full"
+            type="submit"
+            disabled={loading}
+          >
+            Sign In
+          </Button>
         </form>
       </div>
     </div>
