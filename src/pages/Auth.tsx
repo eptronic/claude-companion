@@ -43,23 +43,29 @@ export default function Auth() {
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="w-full max-w-md p-8 space-y-6 bg-card rounded-lg shadow-lg">
         <h2 className="text-2xl font-bold text-center text-foreground">Welcome Back</h2>
-        <form className="space-y-4" onSubmit={handleSignIn}>
+        <form className="space-y-4" onSubmit={handleSignIn} id="supabase-auth-form">
           <div>
             <Input
               type="email"
+              name="email"
               placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              autoComplete="username"
+              form="supabase-auth-form"
             />
           </div>
           <div>
             <Input
               type="password"
+              name="password"
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              autoComplete="current-password"
+              form="supabase-auth-form"
             />
           </div>
           <Button
