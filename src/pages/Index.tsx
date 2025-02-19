@@ -1,5 +1,6 @@
+
 import { useState, useEffect } from "react";
-import { MessageSquare, File, Folder, Search, Send, ChevronDown, ChevronRight } from "lucide-react";
+import { MessageSquare, Send, ChevronDown, ChevronRight, Menu } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -25,12 +26,6 @@ interface Message {
   content: MessageContent;
 }
 
-interface ConversationGroup {
-  id: string;
-  title: string;
-  conversations: any[];
-}
-
 const Index = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
@@ -39,10 +34,9 @@ const Index = () => {
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [conversations, setConversations] = useState<any[]>([]);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
-    files: false,
-    projects: false,
     history: true
   });
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const toggleSection = (section: string) => {
     setExpandedSections(prev => ({
@@ -87,9 +81,7 @@ const Index = () => {
     e.preventDefault();
 
     const trimmedMessage = inputMessage.trim();
-    if (!trimmedMessage) {
-      return;
-    }
+    if (!trimmedMessage) return;
 
     setIsLoading(true);
 
@@ -100,15 +92,10 @@ const Index = () => {
 
     try {
       const { data, error } = await supabase.functions.invoke('chat-with-claude', {
-        body: {
-          messages: updatedMessages
-        },
+        body: { messages: updatedMessages },
       });
 
-      if (error) {
-        console.error('Supabase function error:', error);
-        throw error;
-      }
+      if (error) throw error;
 
       if (data?.content) {
         setMessages([...updatedMessages, { role: "assistant", content: data.content }]);
@@ -142,229 +129,127 @@ const Index = () => {
   };
 
   const getMessageContent = (content: MessageContent): string => {
-    if (typeof content === 'string') {
-      return content;
-    }
+    if (typeof content === 'string') return content;
     return content.text || '';
   };
-
-  const sidebarItems = [
-    { 
-      title: "New Chat", 
-      icon: MessageSquare,
-      onClick: handleNewChat 
-    },
-    { 
-      title: "Files", 
-      icon: File,
-      onClick: () => {
-        if (isLoadingHistory) {
-          toast({
-            title: "Loading",
-            description: "Please wait while we fetch your conversation history.",
-          });
-          return;
-        }
-        if (conversations.length === 0) {
-          toast({
-            title: "No Files",
-            description: "No conversation files found in your history.",
-          });
-          return;
-        }
-        // Handle displaying conversation files
-        toast({
-          title: "Files",
-          description: `Found ${conversations.length} conversations in your history.`,
-        });
-      }
-    },
-    { 
-      title: "Projects", 
-      icon: Folder,
-      onClick: () => {
-        if (isLoadingHistory) {
-          toast({
-            title: "Loading",
-            description: "Please wait while we fetch your projects.",
-          });
-          return;
-        }
-        // Handle projects view
-        toast({
-          title: "Projects",
-          description: "Project organization coming soon.",
-        });
-      }
-    },
-    { 
-      title: "Search", 
-      icon: Search,
-      onClick: () => {
-        if (isLoadingHistory) {
-          toast({
-            title: "Loading",
-            description: "Please wait while we initialize search.",
-          });
-          return;
-        }
-        // Handle search functionality
-        toast({
-          title: "Search",
-          description: "Search functionality coming soon.",
-        });
-      }
-    },
-  ];
 
   return (
     <div className="w-screen h-screen overflow-hidden bg-background">
       <SidebarProvider>
-        <div className="h-full flex">
-          <Sidebar className="border-r border-border bg-card">
-            <SidebarContent>
-              <SidebarGroup>
-                <SidebarMenu>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton 
-                      className="hover:bg-muted"
-                      onClick={handleNewChat}
+        <div className="h-full flex relative">
+          {/* Mobile Menu Button */}
+          <button
+            onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
+            className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-primary/10 rounded-md hover:bg-primary/20 transition-colors"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+
+          {/* Sidebar */}
+          <div className={`fixed inset-y-0 left-0 transform ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:relative lg:translate-x-0 transition-transform duration-200 ease-in-out z-30 w-64`}>
+            <Sidebar className="h-full border-r border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+              <SidebarContent>
+                <SidebarGroup>
+                  <SidebarMenu>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton 
+                        className="hover:bg-muted"
+                        onClick={handleNewChat}
+                      >
+                        <MessageSquare className="w-5 h-5" />
+                        <span>New Chat</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+
+                    <SidebarMenuItem>
+                      <SidebarMenuButton 
+                        className="hover:bg-muted text-destructive"
+                        onClick={handleLogout}
+                      >
+                        <span>Log Out</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  </SidebarMenu>
+
+                  <div className="mt-4">
+                    <SidebarGroupLabel 
+                      className="flex items-center justify-between px-2 cursor-pointer hover:text-primary"
+                      onClick={() => toggleSection('history')}
                     >
-                      <MessageSquare className="w-5 h-5" />
-                      <span>New Chat</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
+                      <span>Chat History</span>
+                      {expandedSections.history ? 
+                        <ChevronDown className="w-4 h-4" /> : 
+                        <ChevronRight className="w-4 h-4" />
+                      }
+                    </SidebarGroupLabel>
+                    {expandedSections.history && (
+                      <SidebarMenuSub>
+                        {isLoadingHistory ? (
+                          <div className="px-2 py-1 text-sm text-muted-foreground">Loading history...</div>
+                        ) : conversations.length > 0 ? (
+                          conversations.map((conv, index) => (
+                            <SidebarMenuItem key={index}>
+                              <SidebarMenuButton 
+                                className="text-sm truncate hover:bg-muted"
+                                onClick={() => {
+                                  toast({
+                                    description: "Loading conversation...",
+                                  });
+                                }}
+                              >
+                                <MessageSquare className="w-4 h-4" />
+                                <span>{conv.title || `Conversation ${index + 1}`}</span>
+                              </SidebarMenuButton>
+                            </SidebarMenuItem>
+                          ))
+                        ) : (
+                          <div className="px-2 py-1 text-sm text-muted-foreground">No chat history</div>
+                        )}
+                      </SidebarMenuSub>
+                    )}
+                  </div>
+                </SidebarGroup>
+              </SidebarContent>
+            </Sidebar>
+          </div>
 
-                  <SidebarMenuItem>
-                    <SidebarMenuButton 
-                      className="hover:bg-muted text-destructive"
-                      onClick={handleLogout}
-                    >
-                      <span>Log Out</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                </SidebarMenu>
-
-                {/* Chat History Section */}
-                <div className="mt-4">
-                  <SidebarGroupLabel 
-                    className="flex items-center justify-between px-2 cursor-pointer hover:text-primary"
-                    onClick={() => toggleSection('history')}
-                  >
-                    <span>Chat History</span>
-                    {expandedSections.history ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                  </SidebarGroupLabel>
-                  {expandedSections.history && (
-                    <SidebarMenuSub>
-                      {isLoadingHistory ? (
-                        <div className="px-2 py-1 text-sm text-muted-foreground">Loading history...</div>
-                      ) : conversations.length > 0 ? (
-                        conversations.map((conv, index) => (
-                          <SidebarMenuItem key={index}>
-                            <SidebarMenuButton 
-                              className="text-sm truncate hover:bg-muted"
-                              onClick={() => {
-                                toast({
-                                  description: "Loading conversation...",
-                                });
-                              }}
-                            >
-                              <MessageSquare className="w-4 h-4" />
-                              <span>{conv.title || `Conversation ${index + 1}`}</span>
-                            </SidebarMenuButton>
-                          </SidebarMenuItem>
-                        ))
-                      ) : (
-                        <div className="px-2 py-1 text-sm text-muted-foreground">No chat history</div>
-                      )}
-                    </SidebarMenuSub>
-                  )}
-                </div>
-
-                {/* Files Section */}
-                <div className="mt-4">
-                  <SidebarGroupLabel 
-                    className="flex items-center justify-between px-2 cursor-pointer hover:text-primary"
-                    onClick={() => toggleSection('files')}
-                  >
-                    <span>Files</span>
-                    {expandedSections.files ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                  </SidebarGroupLabel>
-                  {expandedSections.files && (
-                    <SidebarMenuSub>
-                      <div className="px-2 py-1 text-sm text-muted-foreground">
-                        No files available
-                      </div>
-                    </SidebarMenuSub>
-                  )}
-                </div>
-
-                {/* Projects Section */}
-                <div className="mt-4">
-                  <SidebarGroupLabel 
-                    className="flex items-center justify-between px-2 cursor-pointer hover:text-primary"
-                    onClick={() => toggleSection('projects')}
-                  >
-                    <span>Projects</span>
-                    {expandedSections.projects ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                  </SidebarGroupLabel>
-                  {expandedSections.projects && (
-                    <SidebarMenuSub>
-                      <div className="px-2 py-1 text-sm text-muted-foreground">
-                        No projects available
-                      </div>
-                    </SidebarMenuSub>
-                  )}
-                </div>
-
-                {/* Search Section */}
-                <SidebarMenu className="mt-4">
-                  <SidebarMenuItem>
-                    <SidebarMenuButton 
-                      className="hover:bg-muted"
-                      onClick={() => {
-                        toast({
-                          title: "Search",
-                          description: "Search functionality coming soon.",
-                        });
-                      }}
-                    >
-                      <Search className="w-5 h-5" />
-                      <span>Search</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                </SidebarMenu>
-              </SidebarGroup>
-            </SidebarContent>
-          </Sidebar>
-
-          <main className="flex-1 flex flex-col h-screen">
-            <div className="flex-1 overflow-auto">
-              <div className="max-w-4xl mx-auto p-6">
-                <div className="space-y-6">
-                  {messages.map((message, index) => (
-                    <div
-                      key={index}
-                      className={`flex ${
-                        message.role === "user" ? "justify-end" : "justify-start"
-                      }`}
-                    >
+          {/* Main Content */}
+          <main className="flex-1 flex flex-col h-screen lg:ml-0 relative">
+            <div className="flex-1 overflow-auto px-4 lg:px-0">
+              <div className="max-w-4xl mx-auto py-6">
+                {messages.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-[60vh] space-y-4 text-center">
+                    <MessageSquare className="w-12 h-12 text-muted-foreground/50" />
+                    <h2 className="text-2xl font-semibold text-foreground/80">Welcome to Claude Companion</h2>
+                    <p className="text-muted-foreground max-w-sm">Start a new conversation with Claude by typing your message below.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {messages.map((message, index) => (
                       <div
-                        className={`max-w-[80%] p-4 rounded-lg ${
-                          message.role === "user"
-                            ? "bg-primary/90 text-primary-foreground"
-                            : "bg-card text-card-foreground border border-border"
+                        key={index}
+                        className={`flex ${
+                          message.role === "user" ? "justify-end" : "justify-start"
                         }`}
                       >
-                        {getMessageContent(message.content)}
+                        <div
+                          className={`max-w-[80%] p-4 rounded-lg ${
+                            message.role === "user"
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-card text-card-foreground border border-border"
+                          }`}
+                        >
+                          {getMessageContent(message.content)}
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
-            <div className="border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 w-full">
+            {/* Input Form */}
+            <div className="border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
               <form onSubmit={handleSubmit} className="p-4">
                 <div className="flex gap-2 items-center max-w-4xl mx-auto">
                   <input
@@ -390,6 +275,14 @@ const Index = () => {
               </form>
             </div>
           </main>
+
+          {/* Mobile Overlay */}
+          {isMobileSidebarOpen && (
+            <div 
+              className="fixed inset-0 bg-background/80 backdrop-blur-sm lg:hidden z-20"
+              onClick={() => setIsMobileSidebarOpen(false)}
+            />
+          )}
         </div>
       </SidebarProvider>
     </div>
