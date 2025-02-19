@@ -38,11 +38,15 @@ serve(async (req) => {
     
     while (attempts < maxAttempts) {
       try {
+        // Debug log for API key format (only logging first 4 chars for security)
+        console.log('API Key format check:', CLAUDE_API_KEY.substring(0, 4));
+
         const response = await fetch('https://api.anthropic.com/v1/messages', {
           method: 'POST',
           headers: {
-            'anthropic-api-key': CLAUDE_API_KEY,
+            'x-api-key': CLAUDE_API_KEY,
             'anthropic-version': '2023-01-01',
+            'anthropic-beta': 'messages-2024-01-01',
             'content-type': 'application/json',
           },
           body: JSON.stringify({
@@ -65,6 +69,10 @@ serve(async (req) => {
             error: errorData
           });
 
+          if (response.status === 401) {
+            throw new Error('Invalid API key or authentication error with Claude API');
+          }
+
           // If we get a 429 or 503, wait and retry
           if (response.status === 429 || response.status === 503) {
             attempts++;
@@ -78,7 +86,6 @@ serve(async (req) => {
             }
           }
           
-          // For other errors, throw immediately
           throw new Error(`Claude API error: ${response.status} ${response.statusText}`);
         }
 
@@ -110,7 +117,9 @@ serve(async (req) => {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     return new Response(JSON.stringify({ 
       error: errorMessage,
-      details: 'The service is temporarily unavailable. Please try again in a few moments.'
+      details: error instanceof Error && error.message.includes('API key') 
+        ? 'Please check your Claude API key configuration.'
+        : 'The service is temporarily unavailable. Please try again in a few moments.'
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
