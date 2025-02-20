@@ -10,28 +10,37 @@ export default function Auth() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const handleSignIn = async (e: React.FormEvent) => {
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        throw error;
+      if (isSignUp) {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+        });
+        if (error) throw error;
+        toast({
+          title: "Success",
+          description: "Please check your email to verify your account",
+        });
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (error) throw error;
+        navigate('/');
       }
-
-      navigate('/');
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to sign in",
+        description: error instanceof Error ? error.message : "Authentication failed",
         variant: "destructive",
       });
     } finally {
@@ -42,8 +51,10 @@ export default function Auth() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="w-full max-w-md p-8 space-y-6 bg-card rounded-lg shadow-lg">
-        <h2 className="text-2xl font-bold text-center text-foreground">Welcome Back</h2>
-        <form className="space-y-4" onSubmit={handleSignIn} id="supabase-auth-form">
+        <h2 className="text-2xl font-bold text-center text-foreground">
+          {isSignUp ? "Create an Account" : "Welcome Back"}
+        </h2>
+        <form className="space-y-4" onSubmit={handleAuth} id="supabase-auth-form">
           <div>
             <Input
               type="email"
@@ -73,9 +84,20 @@ export default function Auth() {
             type="submit"
             disabled={loading}
           >
-            Sign In
+            {isSignUp ? "Sign Up" : "Sign In"}
           </Button>
         </form>
+        <div className="text-center">
+          <button
+            type="button"
+            onClick={() => setIsSignUp(!isSignUp)}
+            className="text-primary hover:underline"
+          >
+            {isSignUp
+              ? "Already have an account? Sign In"
+              : "Don't have an account? Sign Up"}
+          </button>
+        </div>
       </div>
     </div>
   );
